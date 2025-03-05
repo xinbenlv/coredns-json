@@ -66,6 +66,61 @@ example.com {
 
 3. Begin using it.
 
+# Build with Docker
+
+```sh
+docker build -t coredns-json .
+```
+
+# Run with Docker
+
+```sh
+docker run \          
+  --name coredns-json \
+  -p 53:53/udp \
+  -p 53:53/tcp \
+  -p 853:853/tcp \
+  -v $(pwd)/Corefile.example:/Corefile \
+  coredns-json /build/coredns/coredns -conf /Corefile
+```
+
+## Run with mock server
+
+This uses the mock server, see `./mock-server` for how to run it on the same network.
+
+## Dig
+
+```sh
+dig @localhost -p 53 example.com MX
+```
+
+You will see
+
+```
+❯ dig @localhost -p 53 example.com MX
+
+; <<>> DiG 9.20.6 <<>> @localhost -p 53 example.com MX
+; (2 servers found)
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 21864
+;; flags: qr rd; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1
+;; WARNING: recursion requested but not available
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 1232
+; COOKIE: fd0fa7127a2f636e (echoed)
+;; QUESTION SECTION:
+;example.com.                   IN      MX
+
+;; ANSWER SECTION:
+example.com.            300     IN      MX      10 mail.example.com.
+
+;; Query time: 109 msec
+;; SERVER: ::1#53(localhost) (UDP)
+;; WHEN: Wed Mar 05 15:10:27 PST 2025
+;; MSG SIZE  rcvd: 95
+```
 
 # Reference
 
