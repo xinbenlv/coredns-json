@@ -10,7 +10,7 @@ echo "Cloning coredns repo..."
 git clone https://github.com/coredns/coredns.git
 
 cd coredns
-git checkout v1.8.3
+git checkout v1.9.4
 
 echo "Patching plugin config..."
 ed plugin.cfg <<EOED
@@ -42,7 +42,8 @@ go get
 go mod download
 
 echo "Building..."
-make SHELL='sh -x' CGO_ENABLED=1 coredns
+# run make coredns	
+make coredns
 
 cp coredns ${SRCDIR}
 chmod -R 755 .git

@@ -8,6 +8,14 @@ RUN apt-get update && \
     update-ca-certificates
 RUN apt-get -y install ed git golang-go make
 
+# if debugging install curl and ping and dig for debugging
+RUN apt-get -y install curl iputils-ping dnsutils
+
+# test ping google.com, curl google.com, dig google.com
+RUN ping -c 1 google.com
+RUN curl google.com
+RUN dig google.com
+
 ADD . /coredns-json/
 RUN chmod 755 coredns-json/build.sh && coredns-json/build.sh
 

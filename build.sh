@@ -10,7 +10,7 @@ echo "Cloning coredns repo..."
 git clone https://github.com/coredns/coredns.git
 
 cd coredns
-git checkout v1.8.3
+git checkout v1.9.4
 
 echo "Patching plugin config..."
 ed plugin.cfg <<EOED
@@ -37,7 +37,7 @@ w
 q
 EOED
 
-go get github.com/xinbenlv/coredns-json@v0.0.1
+go get github.com/xinbenlv/coredns-json@latest
 go get
 go mod download
 
