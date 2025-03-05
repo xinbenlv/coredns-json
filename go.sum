@@ -1,0 +1,6 @@
+github.com/coredns/caddy v1.1.0 h1:ezvsPrT/cF5i8Jbm+zUkXodSVYQFZN2uFrQnJTuau5k=
+github.com/coredns/caddy v1.1.0/go.mod h1:UqG9KQV3Swi.YE9en5J.vxCQE/1WGm9jGKzaPW2gg=
+github.com/coredns/coredns v1.8.3 h1:QY89Xj8sDWBIqGKEggM7qdBlITGpQTHZDFo/wVTmo9M=
+github.com/coredns/coredns v1.8.3/go.mod h1:N9u3/wn6j3gUU9xDU0gR0sTB4LVeYUgsLlc2WUL0S8A=
+github.com/miekg/dns v1.1.41 h1:WMszZWJG0XmzbK9FEmzH2TVcqYzFesusSIB41b8KHxY=
+github.com/miekg/dns v1.1.41/go.mod h1:p6aan82bvRIyn+zDIv9xYNUpwa73JcSh9BKwknJysuI= 
