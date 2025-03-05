@@ -1,7 +1,5 @@
 # coredns-json
 
-## Name
-
 *json* - enables serving DNS records from a JSON API endpoint.
 
 ## Description
@@ -11,7 +9,7 @@ The *json* plugin allows CoreDNS to fetch DNS records from a REST API that retur
 ## Syntax
 
 ```
-json ENDPOINT [dnssec]
+json ENDPOINT
 ```
 
 * **ENDPOINT** is the URL of the JSON API endpoint (required)
@@ -51,32 +49,24 @@ The JSON API endpoint should return responses in the following format:
   - `data`: record data (format depends on type)
 - `Question`: array of question records (optional)
 
-## Examples
+## Usage of plugin
+
+1. Add the `json` to the plugin.cfg file 
+```
+json:github.com/coredns/json
+```
+
+2. Add the `json` directive to the Corefile
 
 ```
 example.com {
-    json https://api.example.com/dns
+  json http://localhost:8080/api/v1/
 }
 ```
 
-## Building
+3. Begin using it.
 
-To build CoreDNS with this plugin, you can use the provided build scripts:
 
-- `build.sh`: For building inside a Docker container
-- `build-standalone.sh`: For building locally
+# Reference
 
-Or add this plugin to a local CoreDNS build:
-
-1. Clone CoreDNS: `git clone https://github.com/coredns/coredns`
-2. Add this plugin to `plugin.cfg`: `json:github.com/xinbenlv/coredns-json`
-3. Run `go get github.com/xinbenlv/coredns-json`
-4. Build CoreDNS: `make`
-
-## Docker
-
-A Docker image can be built using the provided Dockerfile:
-
-```
-docker build -t coredns-json .
-``` 
+- Mock JSON Server: see `./mock-server` for a simple mock JSON API server that can be used for testing the plugin implementation in `nodejs`.
