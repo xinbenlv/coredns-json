@@ -125,3 +125,49 @@ example.com.            300     IN      MX      10 mail.example.com.
 # Reference
 
 - Mock JSON Server: see `./mock-server` for a simple mock JSON API server that can be used for testing the plugin implementation in `nodejs`.
+
+# CoreDNS JSON Plugin - Google Cloud Build Setup
+
+This repository contains the configuration to build and push the CoreDNS JSON plugin Docker image using Google Cloud Build.
+
+## Setup and Usage
+
+### Prerequisites
+
+1. Google Cloud SDK installed
+2. Docker installed
+3. Proper permissions to use Google Cloud Build
+4. Docker Hub account with push access to xinbenlv/coredns-json (optional - only if you want to push to DockerHub)
+
+### Building and Pushing
+
+1. Authenticate with Google Cloud:
+   ```
+   gcloud auth login
+   gcloud config set project YOUR_GCP_PROJECT_ID
+   ```
+
+2. Build and push to Google Container Registry only:
+   ```
+   gcloud builds submit --config=cloudbuild.yaml
+   ```
+
+3. Build and push to both Google Container Registry and Docker Hub:
+   ```
+   gcloud builds submit --config=cloudbuild.yaml --substitutions=_DOCKERHUB_PASSWORD="YOUR_DOCKERHUB_PASSWORD"
+   ```
+   
+   Or use the helper script:
+   ```
+   ./direct-build.sh YOUR_DOCKERHUB_PASSWORD
+   ```
+
+The build process will:
+- Build the Docker image for x86_64 architecture
+- Push the image to Google Container Registry as `gcr.io/YOUR_PROJECT_ID/coredns-json:x86_64`
+- Push the image to Docker Hub as `xinbenlv/coredns-json:x86_64` (only if DockerHub password is provided)
+
+## Customization
+
+- Edit `cloudbuild.yaml` to change build configurations
+- Edit `Dockerfile` to modify the build process

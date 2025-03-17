@@ -1,0 +1,18 @@
+steps:
+# Docker build step
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', 
+         '--platform=linux/amd64', 
+         '-t', 'gcr.io/$PROJECT_ID/coredns-json:x86_64',
+         '.']
+
+# Push to Google Container Registry
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/$PROJECT_ID/coredns-json:x86_64']
+
+# Images to be pushed to GCR
+images:
+  - 'gcr.io/$PROJECT_ID/coredns-json:x86_64'
+
+# Timeout
+timeout: 1800s 

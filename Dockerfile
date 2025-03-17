@@ -1,4 +1,8 @@
-FROM golang:1.23.2 AS builder
+FROM golang:1.23.2-alpine AS golang-with-git
+# Install git and other build dependencies
+RUN apk add --no-cache git build-base
+
+FROM golang-with-git AS builder
 WORKDIR /build
 
 # clone the coredns repo and add coredns-json plugin
@@ -21,6 +25,15 @@ RUN cd /build/coredns && \
 WORKDIR /build/coredns
 RUN make CGO_ENABLED=1 coredns
 
-# run coredns
-CMD ["/build/coredns/coredns"]
+# Create final lightweight runtime image
+FROM alpine:latest
+RUN apk --no-cache add ca-certificates && \
+    mkdir -p /etc/coredns
+
+# Copy binary from builder
+COPY --from=builder /build/coredns/coredns /coredns
+
+# Set the binary as entrypoint
+ENTRYPOINT ["/coredns"]
+CMD ["-conf", "/etc/coredns/Corefile"]
 
