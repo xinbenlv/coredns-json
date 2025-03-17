@@ -2,13 +2,18 @@ FROM golang:1.23.2-alpine AS golang-with-git
 # Install git and other build dependencies
 RUN apk add --no-cache git build-base
 
-FROM golang-with-git AS builder
+FROM golang-with-git AS building-coredns
 WORKDIR /build
 
 # clone the coredns repo and add coredns-json plugin
 RUN git clone https://github.com/coredns/coredns.git && \
     cd coredns && \
     git checkout v1.12.0
+
+WORKDIR /build/coredns
+RUN make CGO_ENABLED=1 coredns
+
+FROM building-coredns AS building-coredns-with-json
 
 # add coredns-json plugin
 COPY . /build/coredns/plugin/json
@@ -31,7 +36,7 @@ RUN apk --no-cache add ca-certificates && \
     mkdir -p /etc/coredns
 
 # Copy binary from builder
-COPY --from=builder /build/coredns/coredns /coredns
+COPY --from=building-coredns-with-json /build/coredns/coredns /coredns
 
 # Set the binary as entrypoint
 ENTRYPOINT ["/coredns"]
