@@ -114,6 +114,7 @@ func (j JSON) ServeDNS(ctx context.Context, w dns.ResponseWriter, m *dns.Msg) (i
 		// Create DNS response message
 		reply := new(dns.Msg)
 		reply.SetReply(m)
+		reply.Authoritative = true
 		reply.Rcode = dnsResp.RCODE
 		reply.AuthenticatedData = dnsResp.AD
 

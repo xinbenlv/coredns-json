@@ -38,14 +38,13 @@ func parseJSON(c *caddy.Controller) (*JSON, error) {
 	}
 
 	for c.Next() {
-		// json url
-		if !c.NextArg() {
+		args := c.RemainingArgs()
+		if len(args) != 1 {
 			return nil, c.ArgErr()
 		}
-		j.URL = c.Val()
+		j.URL = args[0]
 
-		// Process remaining args as options
-		for c.NextArg() {
+		for c.NextBlock() {
 			switch c.Val() {
 			case "dnssec":
 				j.DNSSEC = true
