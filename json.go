@@ -61,8 +61,27 @@ func (j JSON) ServeDNS(ctx context.Context, w dns.ResponseWriter, m *dns.Msg) (i
 	qname := state.Name()
 	// Print entire DNS query 
 	log.Debugf("Received query: %v", m)
+	
+	// If DNSSEC is not enabled and this is a DNSSEC-specific query type, return NOERROR with empty answer
+	if !j.DNSSEC && (state.QType() == dns.TypeDNSKEY || state.QType() == dns.TypeRRSIG || 
+		state.QType() == dns.TypeNSEC || state.QType() == dns.TypeNSEC3 || 
+		state.QType() == dns.TypeNSEC3PARAM || state.QType() == dns.TypeCDS || 
+		state.QType() == dns.TypeCDNSKEY) {
+		log.Debugf("DNSSEC query received but DNSSEC not enabled: responding with NOERROR")
+		msg := new(dns.Msg)
+		msg.SetReply(m)
+		msg.Authoritative = true
+		msg.RecursionAvailable = false
+		msg.RecursionDesired = m.RecursionDesired
+		msg.CheckingDisabled = m.CheckingDisabled
+		msg.AuthenticatedData = false // Explicitly set AD=0 for DNSSEC queries
+		msg.Response = true
+		msg.Rcode = dns.RcodeSuccess
+		w.WriteMsg(msg)
+		return dns.RcodeSuccess, nil
+	}
+	
 	log.Debugf("Constructing API URL: %s with qname: %s", j.URL, qname)
-
 	// Build REST API URL with query name
 	url := fmt.Sprintf("%s?name=%s&type=%d", j.URL, qname, state.QType())
 	log.Debugf("Building URL: %s", url)
@@ -92,14 +111,22 @@ func (j JSON) ServeDNS(ctx context.Context, w dns.ResponseWriter, m *dns.Msg) (i
 	// Use switch case for different HTTP status codes
 	switch resp.StatusCode {
 	case http.StatusNotFound:
-		log.Debugf("404 Not Found: responding with NXDOMAIN")
-		// domain NXDOMAIN
-		// create a new msg
+		log.Debugf("404 Not Found: responding with NOERROR")
+		// domain not found, return NOERROR with empty answer
 		msg := new(dns.Msg)
 		msg.SetReply(m)
-		msg.Rcode = dns.RcodeNameError
+		// DNS Message Flags - explicitly setting all for clarity
+		msg.Authoritative = true         // AA=1: This server is authoritative for this zone
+		msg.RecursionAvailable = false   // RA=0: This server does not support recursion
+		msg.RecursionDesired = m.RecursionDesired // RD: Copy from query
+		msg.CheckingDisabled = m.CheckingDisabled // CD: Copy from query
+		msg.AuthenticatedData = false    // AD=0: Response is not DNSSEC validated
+		msg.Zero = false                 // Z=0: Reserved, must be zero
+		msg.Response = true              // QR=1: This is a response
+		msg.Truncated = false            // TC=0: Message is not truncated
+		msg.Rcode = dns.RcodeSuccess
 		w.WriteMsg(msg)
-		return dns.RcodeNameError, nil
+		return dns.RcodeSuccess, nil
 		
 	case http.StatusOK:
 		// Parse JSON response
@@ -114,9 +141,16 @@ func (j JSON) ServeDNS(ctx context.Context, w dns.ResponseWriter, m *dns.Msg) (i
 		// Create DNS response message
 		reply := new(dns.Msg)
 		reply.SetReply(m)
-		reply.Authoritative = true
+		// DNS Message Flags - explicitly setting all for clarity
+		reply.Authoritative = true         // AA=1: This server is authoritative for this zone
+		reply.RecursionAvailable = false   // RA=0: This server does not support recursion
+		reply.RecursionDesired = m.RecursionDesired // RD: Copy from query
+		reply.CheckingDisabled = m.CheckingDisabled // CD: Copy from query
+		reply.AuthenticatedData = j.DNSSEC && dnsResp.AD  // Only set AD if DNSSEC is enabled
+		reply.Zero = false                 // Z=0: Reserved, must be zero
+		reply.Response = true              // QR=1: This is a response
+		reply.Truncated = false            // TC=0: Message is not truncated
 		reply.Rcode = dnsResp.RCODE
-		reply.AuthenticatedData = dnsResp.AD
 
 		// Convert JSON answers to DNS RRs
 		for _, ans := range dnsResp.Answer {

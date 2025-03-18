@@ -35,6 +35,7 @@ func parseJSON(c *caddy.Controller) (*JSON, error) {
 		Client: &http.Client{
 			Timeout: 5 * time.Second,
 		},
+		DNSSEC: false,
 	}
 
 	for c.Next() {
@@ -55,4 +56,4 @@ func parseJSON(c *caddy.Controller) (*JSON, error) {
 	}
 
 	return j, nil
-} 
+}

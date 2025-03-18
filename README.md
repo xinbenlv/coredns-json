@@ -9,11 +9,19 @@ The *json* plugin allows CoreDNS to fetch DNS records from a REST API that retur
 ## Syntax
 
 ```
-json ENDPOINT
+json ENDPOINT {
+    dnssec
+}
 ```
 
 * **ENDPOINT** is the URL of the JSON API endpoint (required)
-* **dnssec** enables DNSSEC signing of responses (not yet implemented)
+* **dnssec** enables DNSSEC support (optional). When enabled:
+  - The plugin will set the AD (Authenticated Data) flag in responses only if both DNSSEC is enabled and the API response indicates authenticated data
+  - DNSSEC-related query types (DNSKEY, RRSIG, NSEC, NSEC3, NSEC3PARAM, CDS, CDNSKEY) will be processed normally
+  
+  When not enabled (default):
+  - The AD flag will always be set to false
+  - DNSSEC-related query types will return empty responses with NOERROR status
 
 ## API Response Format
 
@@ -59,8 +67,16 @@ json:github.com/coredns/json
 2. Add the `json` directive to the Corefile
 
 ```
+# Basic configuration without DNSSEC
 example.com {
   json http://localhost:8080/api/v1/
+}
+
+# With DNSSEC enabled
+secured-example.com {
+  json http://localhost:8080/api/v1/ {
+    dnssec
+  }
 }
 ```
 

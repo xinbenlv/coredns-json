@@ -1,0 +1,29 @@
+# Base on our custom built CoreDNS image
+ARG BASE_IMAGE=gcr.io/${PROJECT_ID}/coredns-base:latest
+
+# Use base image which already contains Go toolchain and CoreDNS source
+FROM ${BASE_IMAGE}
+
+# Work with existing CoreDNS source code
+WORKDIR /src/coredns
+
+# Copy plugin files
+COPY json.go setup.go plugin/json/
+COPY go.mod go.sum plugin/json/
+
+# Modify plugin.cfg to include our plugin
+RUN sed -i 's/grpc:grpc/grpc:grpc\njson:json/g' plugin.cfg && \
+    go mod edit -replace github.com/coredns/coredns/plugin/json=/src/coredns/plugin/json && \
+    go mod tidy && \
+    go mod download && \
+    make coredns && \
+    ./coredns -version && \
+    cp coredns /coredns
+
+# Add metadata
+LABEL maintainer="Namefi Team" \
+      description="CoreDNS with JSON plugin for dynamic DNS records" \
+      org.opencontainers.image.source="https://github.com/xinbenlv/coredns-json"
+
+# Keep the same command
+CMD ["/coredns", "-conf", "/etc/coredns/Corefile"] 

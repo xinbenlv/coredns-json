@@ -1,0 +1,26 @@
+# Build CoreDNS with complete toolchain
+FROM golang:1.23.2-alpine3.19
+
+# Install build dependencies
+RUN apk add --no-cache git make ca-certificates && \
+    mkdir -p /etc/coredns
+
+# Clone CoreDNS repository and keep all git content
+WORKDIR /src
+RUN git clone https://github.com/coredns/coredns.git && \
+    cd coredns && \
+    git checkout v1.12.0
+
+# Build CoreDNS
+WORKDIR /src/coredns
+RUN go mod download && \
+    make coredns && \
+    cp coredns /coredns
+
+# Add metadata
+LABEL maintainer="Namefi Team" \
+      description="Base CoreDNS image for JSON plugin" \
+      org.opencontainers.image.source="https://github.com/xinbenlv/coredns-json"
+
+# Set default command but no entrypoint
+CMD ["/coredns", "-conf", "/etc/coredns/Corefile"] 

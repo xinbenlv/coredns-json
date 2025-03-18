@@ -1,0 +1,30 @@
+steps:
+# Create buildx builder
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'create-builder'
+  args: ['buildx', 'create', '--name', 'mybuilder', '--use']
+  env:
+    - 'DOCKER_CLI_EXPERIMENTAL=enabled'
+
+# Build base CoreDNS image
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'build-base'
+  args: 
+    - 'buildx'
+    - 'build'
+    - '--platform=linux/amd64'
+    - '--builder=mybuilder'
+    - '--build-arg'
+    - 'BUILDKIT_INLINE_CACHE=1'
+    - '--push'
+    - '-t'
+    - 'gcr.io/$PROJECT_ID/coredns-base:latest'
+    - '-f'
+    - 'Dockerfile.base'
+    - '.'
+  env:
+    - 'DOCKER_BUILDKIT=1'
+    - 'DOCKER_CLI_EXPERIMENTAL=enabled'
+    - 'BUILDKIT_PROGRESS=plain'
+
+timeout: 1800s 

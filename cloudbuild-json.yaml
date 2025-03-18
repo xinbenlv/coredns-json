@@ -1,0 +1,32 @@
+steps:
+# Create buildx builder
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'create-builder'
+  args: ['buildx', 'create', '--name', 'mybuilder', '--use']
+  env:
+    - 'DOCKER_CLI_EXPERIMENTAL=enabled'
+
+# Build JSON plugin image
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'build-json'
+  args: 
+    - 'buildx'
+    - 'build'
+    - '--platform=linux/amd64'
+    - '--builder=mybuilder'
+    - '--build-arg'
+    - 'BUILDKIT_INLINE_CACHE=1'
+    - '--build-arg'
+    - 'BASE_IMAGE=gcr.io/$PROJECT_ID/coredns-base:latest'
+    - '--push'
+    - '-t'
+    - 'gcr.io/$PROJECT_ID/coredns-json:latest'
+    - '-f'
+    - 'Dockerfile.json'
+    - '.'
+  env:
+    - 'DOCKER_BUILDKIT=1'
+    - 'DOCKER_CLI_EXPERIMENTAL=enabled'
+    - 'BUILDKIT_PROGRESS=plain'
+
+timeout: 1800s 
