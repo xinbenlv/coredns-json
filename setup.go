@@ -36,6 +36,7 @@ func parseJSON(c *caddy.Controller) (*JSON, error) {
 			Timeout: 5 * time.Second,
 		},
 		DNSSEC: false,
+		Authority: []string{},
 	}
 
 	for c.Next() {
@@ -49,6 +50,14 @@ func parseJSON(c *caddy.Controller) (*JSON, error) {
 			switch c.Val() {
 			case "dnssec":
 				j.DNSSEC = true
+			case "authority":
+				args := c.RemainingArgs()
+				if len(args) == 0 {
+					return nil, c.ArgErr()
+				}
+				for _, authority := range args {
+					j.Authority = append(j.Authority, authority)
+				}
 			default:
 				return nil, c.Errf("unknown property '%s'", c.Val())
 			}

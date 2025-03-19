@@ -11,6 +11,7 @@ The *json* plugin allows CoreDNS to fetch DNS records from a REST API that retur
 ```
 json ENDPOINT {
     dnssec
+    authority RR...
 }
 ```
 
@@ -21,7 +22,37 @@ json ENDPOINT {
   
   When not enabled (default):
   - The AD flag will always be set to false
-  - DNSSEC-related query types will return empty responses with NOERROR status
+  - DNSSEC-related query types will return empty responses with NOERROR status with appropriate authority section
+  - The DO (DNSSEC OK) flag will be cleared in responses if it was set in the request, indicating that the server is not DNSSEC-capable
+* **authority** configures authority section records (optional):
+  - **RR**: RFC 1035 style resource record(s) to be included in the authority section
+  - You can use either:
+    - Simple `{qname}` placeholder in authority records to insert the query name
+    - Full Go template syntax for more advanced substitutions (see template data section below)
+  - Multiple records can be specified by providing multiple arguments
+  - For SOA records, include them as part of the authority directive (e.g., `authority "{qname} 3600 IN SOA ns1.example.com. admin.example.com. 2023050101 7200 3600 1209600 3600"`)
+  
+  When configured, authority records will be:
+  - Added to the authority section for negative responses (NXDOMAIN or NODATA)
+  - SOA records will be returned directly in the answer section for SOA queries
+
+### Authority Templates
+
+When using Go template syntax for authority records, the following template data is available:
+
+```
+- Name: The query name
+- Qname: Alias for Name (for compatibility)
+- Zone: The zone name (currently set to the query name)
+- Class: The query class
+- Type: The query type
+```
+
+Examples of templates:
+```
+authority "{{ .Name }} 3600 IN SOA ns1.example.com. admin.example.com. 2023050101 7200 3600 1209600 3600"
+authority "{{ .Qname }} 3600 IN NS ns1.{{ .Zone }}" "{{ .Qname }} 3600 IN NS ns2.{{ .Zone }}"
+```
 
 ## API Response Format
 
@@ -49,7 +80,7 @@ The JSON API endpoint should return responses in the following format:
 ```
 
 - `RCODE`: DNS response code (0 = success)
-- `AD`: authenticated data flag
+- `AD`: authenticated data flag (only considered if DNSSEC is enabled in the plugin)
 - `Answer`: array of DNS records
   - `name`: domain name
   - `type`: DNS record type (1=A, 28=AAAA, 5=CNAME, etc.)
@@ -76,6 +107,28 @@ example.com {
 secured-example.com {
   json http://localhost:8080/api/v1/ {
     dnssec
+  }
+}
+
+# With SOA authority record using simple replacement
+example.org {
+  json http://localhost:8080/api/v1/ {
+    authority "{qname} 3600 IN SOA ns1.example.org. admin.example.org. 2023050101 7200 3600 1209600 3600"
+  }
+}
+
+# With NS authority records using simple replacement
+example.net {
+  json http://localhost:8080/api/v1/ {
+    authority "{qname} 3600 IN NS ns1.example.net." "{qname} 3600 IN NS ns2.example.net."
+  }
+}
+
+# With both SOA and NS authority records using Go templates
+example.io {
+  json http://localhost:8080/api/v1/ {
+    authority "{{ .Name }} 3600 IN SOA ns1.example.io. admin.example.io. 2023050101 7200 3600 1209600 3600"
+    authority "{{ .Name }} 3600 IN NS ns1.example.io." "{{ .Name }} 3600 IN NS ns2.example.io."
   }
 }
 ```
